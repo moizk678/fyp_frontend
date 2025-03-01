@@ -21,8 +21,10 @@ import UserMapNavigation from "./components/gps/UserMapNavigation";
 function App() {
   return (
     <AuthProvider>
-      <div className="App">
+      {/* Apply global styles & background */}
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 to-indigo-900 text-white">
         <Routes>
+          {/* Protected Routes with Layout */}
           <Route
             path="/"
             element={
@@ -45,6 +47,8 @@ function App() {
             <Route path="/rfid-card" element={<OrderCard />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
+
+          {/* Public Routes */}
           <Route path="/signup" element={<Signup />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/login" element={<Login />} />

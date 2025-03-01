@@ -25,6 +25,7 @@ const ProfileCard = ({ user }) => {
   });
 
   const [isSaving, setIsSaving] = useState(false);
+
   const handleEditToggle = (field) => {
     setEditMode((prev) => ({ ...prev, [field]: !prev[field] }));
   };
@@ -61,56 +62,54 @@ const ProfileCard = ({ user }) => {
   };
 
   return (
-    <div className="mt-4 flex justify-center items-center">
-      <div className="mx-4 w-full lg:w-1/2 bg-primary rounded-3xl shadow">
-        <div className="h-1/2 w-full flex justify-between items-center p-4">
-          <h1 className="text-main">Profile Settings</h1>
-          <FaUserEdit className="text-2xl text-white" />
+    <div className="flex justify-center items-center min-h-screen p-6">
+      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-lg p-8">
+        {/* Header */}
+        <div className="flex justify-between items-center border-b pb-4 mb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Profile Settings</h1>
+          <FaUserEdit className="text-3xl text-indigo-600" />
         </div>
 
-        <div className="bg-main w-full rounded-3xl flex flex-col justify-around items-center">
+        {/* Profile Fields */}
+        <div className="space-y-6">
           {["name", "email", "phoneNumber"].map((field) => (
-            <div key={field} className="w-full px-4 mb-4">
-              <label
-                htmlFor={`edit-${field}`}
-                className="text-ternary text-sm capitalize"
-              >
+            <div key={field} className="flex flex-col">
+              <label className="text-gray-600 text-sm capitalize">
                 {field.replace(/([A-Z])/g, " $1")}
               </label>
-              <div className="flex items-center border border-ternary_light rounded-full px-4 py-2 bg-white">
+              <div className="flex items-center border border-gray-300 rounded-lg px-4 py-3 bg-gray-50">
                 {editMode[field] ? (
                   <input
                     id={`edit-${field}`}
                     type={field === "email" ? "email" : "text"}
                     value={updatedData[field]}
                     onChange={(e) => handleChange(field, e.target.value)}
-                    className="w-full px-2 bg-transparent text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-0"
+                    className="w-full bg-transparent text-gray-800 placeholder-gray-400 focus:outline-none"
                   />
                 ) : (
-                  <span className="w-full px-2 text-gray-700">
-                    {updatedData[field]}
-                  </span>
+                  <span className="w-full text-gray-800">{updatedData[field]}</span>
                 )}
-                <div className="px-1 flex justify-center items-center gap-2">
+
+                <div className="flex items-center gap-3">
                   {editMode[field] ? (
                     <>
                       <button
                         onClick={() => handleSave(field)}
                         disabled={isSaving}
-                        className="text-green-500"
+                        className="text-green-500 hover:text-green-600 font-bold"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => handleCancel(field)}
-                        className="text-red-500"
+                        className="text-red-500 hover:text-red-600 font-bold"
                       >
                         Cancel
                       </button>
                     </>
                   ) : (
                     <MdEdit
-                      className="cursor-pointer"
+                      className="cursor-pointer text-gray-500 hover:text-indigo-600"
                       onClick={() => handleEditToggle(field)}
                     />
                   )}
@@ -118,7 +117,11 @@ const ProfileCard = ({ user }) => {
               </div>
             </div>
           ))}
-      <ChangePasswordComponent />
+        </div>
+
+        {/* Change Password Section */}
+        <div className="mt-8 flex justify-center">
+          <ChangePasswordComponent />
         </div>
       </div>
     </div>

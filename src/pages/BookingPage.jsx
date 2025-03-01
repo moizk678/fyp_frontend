@@ -9,36 +9,43 @@ const BookingPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="content flex flex-col">
-      <div className="mt-3 flex justify-center items-center gap-1">
+    <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-b from-purple-900 via-violet-700 to-indigo-900 p-8">
+      {/* Ticket Filter Section */}
+      <div className="mt-8 flex justify-center items-center gap-4 bg-white/10 p-4 rounded-full shadow-md backdrop-blur-lg">
         <button
-          className={`text-white py-2 px-6 rounded-full ${
+          className={`px-6 py-3 rounded-full font-semibold transition-all text-lg shadow-md ${
             filterType === "active"
-              ? "bg-tertiary text-white"
-              : "hover:bg-tertiary hover:text-primary bg-primary"
+              ? "bg-yellow-400 text-black"
+              : "bg-white/20 text-white hover:bg-yellow-400 hover:text-black"
           }`}
           onClick={() => setFilterType("active")}
         >
-          Active Tickets
+          🎟 Active Tickets
         </button>
         <button
-          className={`text-white py-2 px-6 rounded-full ${
+          className={`px-6 py-3 rounded-full font-semibold transition-all text-lg shadow-md ${
             filterType === "completed"
-              ? "bg-tertiary text-white"
-              : "hover:bg-tertiary hover:text-primary bg-primary"
+              ? "bg-yellow-400 text-black"
+              : "bg-white/20 text-white hover:bg-yellow-400 hover:text-black"
           }`}
           onClick={() => setFilterType("completed")}
         >
-          Past Tickets
+          🕒 Past Tickets
         </button>
       </div>
-      <TicketCard filterType={filterType} />
-      {/* <button
-        className="app-btn flex gap-2 max-w-fit mx-auto mb-20"
+
+      {/* Ticket List */}
+      <div className="mt-6 w-full max-w-2xl">
+        <TicketCard filterType={filterType} />
+      </div>
+
+      {/* Track Your Bus Button */}
+      <button
+        className="mt-10 flex items-center gap-3 px-6 py-3 bg-green-500 hover:bg-green-600 text-white text-lg font-semibold rounded-full transition-all shadow-md transform hover:scale-105"
         onClick={() => navigate("/map")}
       >
-        Track Your Bus <IoIosNavigate className="text-2xl" />
-      </button> */}
+        🚍 Track Your Bus <IoIosNavigate className="text-2xl" />
+      </button>
     </div>
   );
 };

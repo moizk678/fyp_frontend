@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useNavigate } from "react-router-dom";
 import { CgArrowLongRightC } from "react-icons/cg";
 import { formatDateToDayMonth, formatTime } from "./HelperFunctions";
@@ -17,39 +16,46 @@ const RouteCard = ({
 }) => {
   const navigate = useNavigate();
   return (
-    <div className="bg-main mt-2 p-3 shadow-md rounded-xl">
-      <p className="text-center font-bold flex justify-center items-center gap-2">
-        {adminName} <FaBusAlt />
+    <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl p-6 m-4 transition-transform transform hover:scale-105 hover:shadow-2xl">
+      {/* Bus Service Name */}
+      <p className="text-center font-bold flex justify-center items-center gap-2 text-lg text-white">
+        {adminName} <FaBusAlt className="text-yellow-400" />
       </p>
-      <div className="flex justify-center items-center ml-4  w-full">
-        <p className="">{origin}</p>
-        <CgArrowLongRightC className="mx-1 text-3xl" />
-        <p className="">{destination}</p>
+
+      {/* Route Info */}
+      <div className="flex justify-center items-center my-4 text-white font-semibold text-lg">
+        <p>{origin}</p>
+        <CgArrowLongRightC className="mx-2 text-3xl text-blue-300" />
+        <p>{destination}</p>
       </div>
-      <div className="grid grid-cols-[35%_65%] md:grid-cols-2 items-center">
-        <img className="rounded-md" src={imageSrc} alt={destination} />
-        <div>
-          <div className="flex flex-col gap-4">
-            <div className="ml-4 flex flex-col justify-center items-center">
-              <p className="text-tertiary">Only in</p>
-              <p className="font-bold">Rs. {price}</p>
-              <p className="app-btn text-sm mb-2 text-center">
-                {formatDateToDayMonth(date)} {formatTime(departureTime)}
-              </p>
-              <p className="app-btn text-sm">
-                {route.stops.length === 0
-                  ? "Non Stop"
-                  : `Stops: ${route.stops.length}`}
-              </p>
-            </div>
-          </div>
+
+      {/* Image & Ticket Info */}
+      <div className="grid grid-cols-1 md:grid-cols-[40%_60%] items-center">
+        <div className="flex justify-center">
+          <img
+            className="rounded-lg w-auto h-32 max-w-full object-contain"
+            src={imageSrc}
+            alt={destination}
+          />
+        </div>
+        <div className="flex flex-col justify-center items-center space-y-3 mt-3 md:mt-0">
+          <p className="text-green-300 font-medium">💰 Only in</p>
+          <p className="text-2xl font-bold text-white">Rs. {price}</p>
+          <p className="bg-gray-200/50 px-4 py-2 rounded-lg text-sm font-semibold text-white backdrop-blur-md">
+            📅 {formatDateToDayMonth(date)} | ⏰ {formatTime(departureTime)}
+          </p>
+          <p className="bg-yellow-400 px-4 py-2 rounded-lg text-sm font-semibold text-gray-800">
+            {route.stops.length === 0 ? "🛑 Non Stop" : `🚏 Stops: ${route.stops.length}`}
+          </p>
         </div>
       </div>
+
+      {/* CTA Button */}
       <button
         onClick={() => navigate(`/seat-selection/${id}`)}
-        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded mt-4 w-full"
+        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl mt-6 w-full transition-transform transform hover:scale-105 shadow-lg"
       >
-        Book my Ticket
+        🎟️ Book my Ticket
       </button>
     </div>
   );

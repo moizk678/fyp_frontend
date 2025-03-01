@@ -1,11 +1,11 @@
-/* eslint-disable no-unused-vars */
-import { FaBus } from "react-icons/fa";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import Loader from "../utils/Loader";
 import { signUpUser } from "../api/AuthenticationApi";
+import Loader from "../utils/Loader";
+import { FaBus, FaEnvelope, FaLock, FaPhone, FaEye, FaEyeSlash, FaUser } from "react-icons/fa";
+import PurpleBus from "../../assets/ppb.jpg"; // Adjusted path
+
 
 function Signup() {
   const navigate = useNavigate();
@@ -18,13 +18,8 @@ function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,9 +40,8 @@ function Signup() {
       setIsLoading(true);
       const result = await signUpUser(data);
       if (result.success) {
-        const { email, message } = result.data;
-        localStorage.setItem("email", email);
-        toast.success(message);
+        localStorage.setItem("email", result.data.email);
+        toast.success(result.data.message);
         navigate("/otp-verification");
       } else {
         toast.error(result.message);
@@ -60,172 +54,141 @@ function Signup() {
     }
   };
 
-  const handleLogin = () => {
-    navigate("/login");
-  };
-
   return (
-    <div className="px-4 lg:px-0 grid grid-cols-1 md:grid-cols-2 overflow-hidden h-screen bg-main bg-[url('https://images.pexels.com/photos/4502111/pexels-photo-4502111.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1')] lg:bg-none">
-      {/* Left image section */}
-      <div className="hidden md:block">
-        <img
-          src="https://heybus.com.ua/source/blog/perevagi_ta_nedoliki_podorozi_avtobusom.jpg"
-          className="object-cover w-full h-full"
-          alt="signup-illustration"
-        />
-      </div>
+    <div className="px-4 lg:px-0 grid grid-cols-1 md:grid-cols-2 h-screen 
+        bg-gradient-to-r from-purple-900 via-violet-700 to-indigo-500"
+    >
+{/* Left Side Image */}
+<div className="hidden md:block">
+  <img
+    src={PurpleBus}
+    className="object-contain w-full h-full brightness-75 mx-auto"
+    alt="purple-bus"
+  />
+</div>
 
-      {/* Form section */}
-      <div className="flex justify-center max-h-screen">
+      {/* Right Side Signup Form */}
+      <div className="flex justify-center items-center">
         <form
-          className="border-primary border-solid border-2 w-full lg:w-2/3 rounded-lg h-fit my-auto px-4 lg:px-10 py-5"
+          className="border border-gray-300 shadow-xl backdrop-blur-lg bg-white/15 p-6 w-full lg:w-2/3
+          max-w-md rounded-xl transition-all duration-300 ease-in-out hover:scale-105 animate-fade-in my-auto"
           onSubmit={handleSubmit}
         >
-          {/* Logo / Title */}
-          <div className="flex items-center justify-center">
-            <FaBus className="text-2xl text-primary mr-2" />
-            <span className="text-primary text-2xl text-center font-bold mb-0.5">
-              Tap & Travel
-            </span>
+          {/* Logo & Title */}
+          <div className="flex items-center justify-center mb-4">
+            <FaBus className="text-3xl text-yellow-300 animate-bounce mr-2" />
+            <span className="text-yellow-300 text-2xl font-bold">Tap & Travel</span>
           </div>
-          <h2 className="text-xl italic font-bold text-center mb-0.5">
+          <h2 className="text-base text-white italic text-center mb-4">
             Journey Bright, Day or Night
           </h2>
 
           {/* Full Name */}
-          <div className="flex space-x-2">
-            <div className="w-full mb-1 flex flex-col">
-              <label htmlFor="full-name" className="font-bold text-lg">
-                Full Name :
-              </label>
+          <div className="mb-3">
+            <label htmlFor="name" className="block text-white font-semibold mb-1 text-sm">Full Name</label>
+            <div className="flex items-center border border-gray-400 rounded-full px-3 py-1.5 
+                bg-white/20 focus-within:border-yellow-400 transition-all text-white">
+              <FaUser className="text-yellow-300 mr-2" />
               <input
+                className="w-full bg-transparent outline-none placeholder-white/80 text-sm"
                 type="text"
-                id="full-name"
-                name="full-name"
+                id="name"
+                name="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="border-ternary_light border-solid border-2 rounded-full px-4 py-1 focus:border-primary focus:outline-none"
-                placeholder="Full Name"
+                placeholder="Enter Your Full Name"
               />
             </div>
           </div>
 
           {/* Email */}
-          <div className="mb-1 flex flex-col">
-            <label htmlFor="email" className="font-bold text-lg">
-              Email :
-            </label>
-            <input
-              className="border-ternary_light border-solid border-2 rounded-full px-4 py-1 focus:border-primary focus:outline-none"
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="Enter Your E-mail"
-            />
+          <div className="mb-3">
+            <label htmlFor="email" className="block text-white font-semibold mb-1 text-sm">Email</label>
+            <div className="flex items-center border border-gray-400 rounded-full px-3 py-1.5 
+                bg-white/20 focus-within:border-yellow-400 transition-all text-white">
+              <FaEnvelope className="text-yellow-300 mr-2" />
+              <input
+                className="w-full bg-transparent outline-none placeholder-white/80 text-sm"
+                type="email"
+                id="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Enter Your Email"
+              />
+            </div>
           </div>
 
           {/* Password & Confirm Password */}
-          <div>
-            <div className="mb-1 flex flex-col relative">
-              <label htmlFor="password" className="font-bold text-lg">
-                Password:
-              </label>
+          {[["Password", password, setPassword, showPassword, togglePasswordVisibility, "password"], 
+            ["Confirm Password", confirmPassword, setConfirmPassword, showConfirmPassword, toggleConfirmPasswordVisibility, "confirm-password"]]
+            .map(([label, value, setter, show, toggle, id], index) => (
+            <div key={index} className="mb-3">
+              <label htmlFor={id} className="block text-white font-semibold mb-1 text-sm">{label}</label>
+              <div className="flex items-center border border-gray-400 rounded-full px-3 py-1.5 
+                bg-white/20 focus-within:border-yellow-400 transition-all text-white relative">
+                <FaLock className="text-yellow-300 mr-2" />
+                <input
+                  className="w-full bg-transparent outline-none placeholder-white/80 text-sm pr-8"
+                  type={show ? "text" : "password"}
+                  id={id}
+                  name={id}
+                  value={value}
+                  onChange={(e) => setter(e.target.value)}
+                  required
+                  placeholder={`Enter ${label}`}
+                />
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="absolute right-3 text-yellow-300 text-xs"
+                >
+                  {show ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Phone Number */}
+          <div className="mb-3">
+            <label htmlFor="phone" className="block text-white font-semibold mb-1 text-sm">Phone Number</label>
+            <div className="flex items-center border border-gray-400 rounded-full px-3 py-1.5 
+                bg-white/20 focus-within:border-yellow-400 transition-all text-white">
+              <FaPhone className="text-yellow-300 mr-2" />
               <input
-                className="border-ternary_light border-solid border-2 rounded-full px-4 py-1 focus:border-primary focus:outline-none pr-10"
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter Password"
+                className="w-full bg-transparent outline-none placeholder-white/80 text-sm"
+                type="number"
+                id="phone"
+                name="phone"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
+                placeholder="Enter Your Phone Number"
               />
-              <button
-                type="button"
-                onClick={togglePasswordVisibility}
-                className="absolute bottom-3 right-0 flex items-center px-3"
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
-
-            <div className="mb-1 flex flex-col relative">
-              <label htmlFor="confirm-password" className="font-bold text-lg">
-                Confirm Password:
-              </label>
-              <input
-                className="border-ternary_light border-solid border-2 rounded-full px-4 py-1 focus:border-primary focus:outline-none pr-10"
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirm-password"
-                name="confirm-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm Password"
-                required
-              />
-              <button
-                type="button"
-                onClick={toggleConfirmPasswordVisibility}
-                className="absolute bottom-3 right-0 flex items-center px-3"
-              >
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
             </div>
           </div>
 
-          {/* Phone Number (spinner removed) */}
-          <div className="mb-1 flex flex-col">
-            <label htmlFor="phone-number" className="font-bold text-lg">
-              Phone Number :
-            </label>
-            <input
-              className="
-                border-ternary_light
-                border-solid
-                border-2
-                rounded-full
-                px-4
-                py-1
-                focus:border-primary
-                focus:outline-none
-                appearance-none
-                [-moz-appearance:textfield]
-                [&::-webkit-outer-spin-button]:appearance-none
-                [&::-webkit-inner-spin-button]:appearance-none
-              "
-              type="number"
-              name="phone-number"
-              id="phone-number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-              placeholder="Phone Number"
-            />
-          </div>
+          {/* Sign Up Button */}
+          <button
+            className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-full py-2 w-full
+                transition duration-300 ease-in-out transform hover:scale-105 shadow-lg"
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? <Loader /> : "Sign Up"}
+          </button>
 
-          {/* Submit & Login Link */}
-          <div>
-            <div className="bg-primary my-2 border-2 border-solid rounded-full px-4 py-1 text-main text-xl w-full">
-              <button
-                className="text-main text-lg w-full"
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? <Loader /> : "Sign Up"}
-              </button>
-            </div>
-            <h3 className="text-lg text-center">
-              Already have an account, go to{" "}
-              <br className="block md:hidden" />
-              <NavLink to="/login" className="font-bold underline italic">
-                Login Page
-              </NavLink>
-            </h3>
-          </div>
+          {/* Back to Login Button */}
+          <button
+            className="mt-3 border border-yellow-400 text-yellow-400 hover:bg-yellow-400 hover:text-black 
+                font-semibold rounded-full py-2 w-full transition duration-300 ease-in-out transform hover:scale-105"
+            type="button"
+            onClick={() => navigate("/login")}
+          >
+            Back to Login Page
+          </button>
         </form>
       </div>
     </div>

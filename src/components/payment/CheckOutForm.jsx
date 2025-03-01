@@ -20,26 +20,18 @@ const CheckOutForm = ({ amount, busId, userId, adminId, onPaymentSuccess }) => {
     try {
       const { data } = await axios.post(
         `${apiBaseUrl}/payment/create-payment-intent`,
-        {
-          amount,
-          busId,
-          userId,
-          adminId,
-        }
+        { amount, busId, userId, adminId }
       );
 
       const clientSecret = data.clientSecret;
-
-      // Confirm the payment with Stripe
       const cardElement = elements.getElement(CardElement);
+
       const { paymentIntent, error } = await stripe.confirmCardPayment(
         clientSecret,
         {
           payment_method: {
             card: cardElement,
-            billing_details: {
-              name: user.name,
-            },
+            billing_details: { name: user.name },
           },
         }
       );
@@ -48,7 +40,7 @@ const CheckOutForm = ({ amount, busId, userId, adminId, onPaymentSuccess }) => {
         setError(error.message);
       } else if (paymentIntent.status === "succeeded") {
         onPaymentSuccess(paymentIntent);
-        toast.success("Payment successful!");
+        toast.success("✅ Payment successful!");
         await axios.post(`${apiBaseUrl}/payment/update-status`, {
           paymentId: paymentIntent.id,
           status: "succeeded",
@@ -62,41 +54,44 @@ const CheckOutForm = ({ amount, busId, userId, adminId, onPaymentSuccess }) => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-bold text-center mb-4">
-        Complete Your Payment
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="p-4 border border-gray-300 rounded-lg">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: "16px",
-                  color: "#424770",
-                  "::placeholder": {
-                    color: "#aab7c4",
-                  },
-                },
-                invalid: {
-                  color: "#9e2146",
-                },
+<div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-purple-900 via-violet-700 to-indigo-900 p-6">
+  <div className="w-full max-w-lg bg-white/10 backdrop-blur-lg shadow-2xl border border-white/20 rounded-3xl p-10 animate-fade-in">
+    <h2 className="text-3xl font-bold text-center text-white mb-6">
+      💳 Complete Your Payment
+    </h2>
+
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Card Input Section */}
+      <div className="p-5 border border-gray-400 bg-gray-900/70 text-white rounded-xl shadow-md focus-within:ring-2 focus-within:ring-yellow-400">
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: "18px",
+                color: "#ffffff",
+                "::placeholder": { color: "#aab7c4" },
               },
-            }}
-          />
-        </div>
+              invalid: { color: "#ff4d4d" },
+            },
+          }}
+        />
+      </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+      {/* Error Message Display */}
+      {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={!stripe || isProcessing}
-          className="w-full py-2 px-4 bg-primary text-white font-bold rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
-        >
-          {isProcessing ? "Processing..." : "Pay Now"}
-        </button>
-      </form>
-    </div>
+      {/* Pay Now Button */}
+      <button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="w-full py-3 bg-yellow-400 text-black font-semibold rounded-xl hover:bg-yellow-500 transition-transform transform hover:scale-105 shadow-lg disabled:opacity-50"
+      >
+        {isProcessing ? "Processing..." : "💰 Pay Now"}
+      </button>
+    </form>
+  </div>
+</div>
+
   );
 };
 

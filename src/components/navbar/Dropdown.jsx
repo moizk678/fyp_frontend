@@ -34,31 +34,36 @@ const Dropdown = () => {
   }, []);
 
   return (
-    <div className="relative font-[sans-serif] w-max mx-auto" ref={dropdownRef}>
+    <div className="relative w-max mx-auto" ref={dropdownRef}>
+      {/* Account Button */}
       <button
         type="button"
         onClick={toggleDropdown}
-        className="rounded text-white border-none outline-none flex items-center"
+        className="rounded text-white flex items-center hover:text-yellow-300 transition-all"
       >
-        <MdAccountCircle className="text-xl mr-2" />
+        <MdAccountCircle className="text-2xl mr-1" />
         Account
         <RiArrowDropDownLine className="text-3xl" />
       </button>
 
+      {/* Dropdown Menu */}
       {isDropdownOpen && (
-        <ul className="absolute flex-col items-center justify-center block shadow-lg bg-white py-2 z-[1000] min-w-full rounded-lg max-h-96 overflow-auto">
+        <ul
+          className="absolute right-0 mt-2 w-40 shadow-lg bg-gradient-to-b from-purple-900 to-violet-700 text-white 
+          py-2 z-[1000] rounded-lg max-h-96 overflow-auto transition-all duration-200 ease-in-out transform scale-95 origin-top"
+        >
           <Link to="/profile">
-            <li className="py-1 flex items-center justify-center gap-2 hover:bg-blue-50 text-black text-sm cursor-pointer">
-              <MdEdit />
+            <li className="py-2 px-4 flex items-center gap-2 hover:bg-purple-800 cursor-pointer transition-all">
+              <MdEdit className="text-yellow-300" />
               Profile
             </li>
           </Link>
           <NavLink
             to="/login"
             onClick={handleLogout}
-            className="py-1 flex items-center justify-center gap-2 hover:bg-blue-50 text-black text-sm cursor-pointer"
+            className="py-2 px-4 flex items-center gap-2 hover:bg-purple-800 cursor-pointer transition-all"
           >
-            <RiLogoutCircleLine /> Logout
+            <RiLogoutCircleLine className="text-yellow-300" /> Logout
           </NavLink>
         </ul>
       )}

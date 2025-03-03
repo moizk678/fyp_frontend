@@ -41,7 +41,11 @@ const TicketCard = ({ filterType }) => {
               <p className="text-lg font-bold">{getCityShortForm(ticket.route.startCity)}</p>
               <p className="text-xs">{ticket.route.startCity}</p>
             </div>
-            <img src={`https://www.freeiconspng.com/uploads/bus-png-${Math.floor(Math.random() * 5) + 1}.png`} className="h-14" alt="Bus Logo" />
+            <img
+              src={`https://www.freeiconspng.com/uploads/bus-png-${Math.floor(Math.random() * 5) + 1}.png`}
+              className="h-14"
+              alt="Bus Logo"
+            />
             <div>
               <p className="text-sm text-gray-500">{getDayShortName(ticket.date)}</p>
               <p className="text-lg font-bold">{getCityShortForm(ticket.route.endCity)}</p>
@@ -55,13 +59,30 @@ const TicketCard = ({ filterType }) => {
             <div className="absolute w-4 h-4 bg-gray-900 rounded-full -right-2 top-1/2 transform -translate-y-1/2"></div>
           </div>
 
-          {/* Passenger Info */}
+          {/* Passenger & Additional Info */}
           <div className="text-sm p-2">
             <div className="flex justify-between">
               <div>
                 <p className="text-gray-500">Passenger</p>
-                <p className="font-semibold">{ticket?.user}</p>
+                {/* Fetch customerName entered during seat selection */}
+                <p className="font-semibold">{ticket.user}</p>
               </div>
+              <div>
+                <p className="text-gray-500">Gender</p>
+                <p
+                  className={`font-semibold ${
+                    ticket.gender === "M"
+                      ? "text-blue-500"
+                      : ticket.gender === "F"
+                      ? "text-pink-500"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {ticket.gender || "N/A"}
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-between mt-2">
               <div>
                 <p className="text-gray-500">Class</p>
                 <p className="font-semibold">{ticket.busDetails.standard.toUpperCase()}</p>
@@ -90,8 +111,7 @@ const TicketCard = ({ filterType }) => {
             <div className="absolute w-4 h-4 bg-gray-900 rounded-full -left-2 top-1/2 transform -translate-y-1/2"></div>
             <div className="absolute w-4 h-4 bg-gray-900 rounded-full -right-2 top-1/2 transform -translate-y-1/2"></div>
           </div>
-
-
+          
         </div>
       ))}
     </div>

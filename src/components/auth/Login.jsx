@@ -5,10 +5,9 @@ import { loginUser } from "../api/AuthenticationApi";
 import Loader from "../utils/Loader";
 import { useDispatch } from "react-redux";
 import { initializeStore } from "../../store/intializeStore";
-import { FaBus, FaEnvelope, FaLock } from "react-icons/fa";
+import { FaBus, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { apiBaseUrl } from "../api/settings";
 import PurpleBus from "../../assets/ppb.jpg"; // Adjusted path
-
 
 function Login() {
   const navigate = useNavigate();
@@ -16,6 +15,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,16 +53,14 @@ function Login() {
         bg-gradient-to-r from-purple-900 via-violet-700 to-indigo-500"
     >
 
-{/* Left Side Image */}
-<div className="hidden md:block">
-  <img
-    src={PurpleBus}
-    className="object-contain w-full h-full brightness-75 mx-auto"
-    alt="purple-bus"
-  />
-</div>
-
-
+      {/* Left Side Image */}
+      <div className="hidden md:block">
+        <img
+          src={PurpleBus}
+          className="object-contain w-full h-full brightness-75 mx-auto"
+          alt="purple-bus"
+        />
+      </div>
 
       {/* Right Side Login Form */}
       <div className="flex justify-center items-center">
@@ -101,7 +99,7 @@ function Login() {
             </div>
           </div>
 
-          {/* Password Input */}
+          {/* Password Input with Show/Hide Feature */}
           <div className="mb-4">
             <label htmlFor="password" className="block text-white font-semibold mb-1">
               Password
@@ -111,7 +109,7 @@ function Login() {
               <FaLock className="text-yellow-300 mr-2" />
               <input
                 className="w-full bg-transparent outline-none placeholder-white/80"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={password}
@@ -119,6 +117,13 @@ function Login() {
                 required
                 placeholder="Enter Your Password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="focus:outline-none ml-2 text-yellow-300"
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
 

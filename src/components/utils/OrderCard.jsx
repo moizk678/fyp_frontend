@@ -1,234 +1,206 @@
-/* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
-import { apiBaseUrl } from "../api/settings";
-import { pakistanCities } from "./data";
-import toast from "react-hot-toast";
-import { jwtDecode } from "jwt-decode";
-import Loader from "./Loader";
-import { useSelector } from "react-redux";
+'use client';
 
-const OrderCard = () => {
-  const user = useSelector((state) => state.user.data);
-  const status = useSelector((state) => state.user.status);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+
+const OrderCard = ({ onSubmit }) => {
   const [formData, setFormData] = useState({
-    province: "",
-    city: "",
-    postalCode: "",
-    address: "",
+    fullName: '',
+    email: '',
+    province: '',
+    city: '',
+    postalCode: '',
+    address: '',
   });
-  const [provinces, setProvinces] = useState([]);
-  const [cities, setCities] = useState([]);
-
-  useEffect(() => {
-    const uniqueProvinces = [
-      ...new Set(Object.values(pakistanCities).map((city) => city.province)),
-    ];
-    setProvinces(uniqueProvinces);
-  }, []);
-
-  const handleProvinceChange = (e) => {
-    const selectedProvince = e.target.value;
-    setFormData({ ...formData, province: selectedProvince, city: "" });
-
-    // Filter cities based on the selected province
-    const citiesInProvince = Object.values(pakistanCities)
-      .filter((city) => city.province === selectedProvince)
-      .map((city) => city.name);
-    setCities(citiesInProvince);
-  };
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+    // Prevent changes if order is placed or confirmation is pending
+    if (orderPlaced || confirmModalOpen) return;
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    const decodedToken = jwtDecode(localStorage.getItem("token"));
+  const handleSubmit = (e) => {
     e.preventDefault();
+    // Validate that all fields are filled
+    if (Object.values(formData).some((value) => value.trim() === '')) {
+      toast.error('All fields are required!');
+      return;
+    }
+    // Open the confirmation popup and disable further clicks
+    setConfirmModalOpen(true);
+  };
 
-    const patchData = {
-      email: decodedToken?.email,
-      address: formData,
-      RFIDCardStatus: "booked",
-    };
-    console.log("Address Form Data", patchData);
-
+  // Function to send confirmation email (requires a backend endpoint)
+  const sendConfirmationEmail = async (email, orderData) => {
     try {
-      const response = await fetch(`${apiBaseUrl}/user/update-profile`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(patchData),
+      const response = await fetch('/api/send-confirmation-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, orderData }),
       });
-
-      const result = await response.json();
-      if (response.ok) {
-        toast.success("Your RFID Card will be delivered soon to your address.");
-        setIsModalOpen(false);
-      } else {
-        alert("Error updating profile: " + result.message);
+      if (!response.ok) {
+        throw new Error('Failed to send confirmation email.');
       }
     } catch (error) {
-      alert("Error: " + error.message);
+      console.error(error);
+      throw error;
     }
   };
 
-  const handleChangeAddressClick = () => {
-    // Prefill the form with existing data
-    if (user) {
-      setFormData({
-        province: user?.address?.province || "",
-        city: user?.address?.city || "",
-        postalCode: user?.address?.postalCode || "",
-        address: user?.address?.address || "",
-      });
-      setIsModalOpen(true);
+  const handleConfirmYes = async () => {
+    // Immediately close the confirmation popup
+    setConfirmModalOpen(false);
+    // Place the order
+    setOrderPlaced(true);
+    setIsModalOpen(true);
+    toast.success('Your RFID Card order has been placed successfully!');
+    onSubmit(formData);
+    // Attempt to send the confirmation email
+    try {
+      await sendConfirmationEmail(formData.email, formData);
+    } catch (error) {
+      toast.error('Confirmation email sending failed!');
     }
+  };
+
+  const handleConfirmNo = () => {
+    // Close the confirmation popup without placing the order
+    setConfirmModalOpen(false);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
   };
 
   return (
-    <div className="mx-auto">
-      <div className="flex flex-col justify-center gap-2 items-center m-2">
-        {user.RFIDCardStatus === "booked" ? (
-          <>
-            <h1>
-              Your RFID Card Will Be Delivered Soon to {user.address.address}.
-            </h1>
-          </>
-        ) : user.RFIDCardStatus === "delivered" ? (
-          <h1>Your RFID Card has been delivered to {user.address.address}.</h1>
-        ) : (
-          <h1>Order FREE RFID Card for our premier Services.</h1>
-        )}
-
-        {/* Loading state check */}
-        {status === "loading" ? (
-          <Loader /> // Show loading text or spinner
-        ) : (
-          <>
-            {/* Button Logic based on RFIDCardStatus */}
-            {user.RFIDCardStatus === "booked" ? (
-              <>
-                <button onClick={handleChangeAddressClick} className="app-btn">
-                  Change Address
-                </button>
-              </>
-            ) : user.RFIDCardStatus === "delivered" ? (
-              <button className="app-btn" disabled>
-                Your Card Has Been Delivered
+    <div className="max-w-lg mx-auto mt-10 p-6 bg-white rounded-xl shadow-lg border border-gray-300 relative">
+      {!orderPlaced ? (
+        <>
+          <h2 className="text-2xl font-bold text-center text-blue-700 mb-4 font-sans">
+            Order Your RFID Card
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {[
+              { label: 'Full Name', name: 'fullName', type: 'text' },
+              { label: 'Email', name: 'email', type: 'email' },
+              { label: 'Province', name: 'province', type: 'text' },
+              { label: 'City', name: 'city', type: 'text' },
+              { label: 'Postal Code', name: 'postalCode', type: 'text' },
+            ].map(({ label, name, type }) => (
+              <div key={name} className="mb-3">
+                <label className="block text-gray-700 font-semibold text-base mb-1 font-serif">
+                  {label}
+                </label>
+                <input
+                  type={type}
+                  name={name}
+                  value={formData[name]}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border rounded-lg bg-gray-100 shadow-sm text-gray-700 focus:ring-2 focus:ring-blue-400 font-mono transition-all"
+                  required
+                  disabled={confirmModalOpen}
+                />
+              </div>
+            ))}
+            <div className="mb-3">
+              <label className="block text-gray-700 font-semibold text-base mb-1 font-serif">
+                Address
+              </label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="w-full p-3 border rounded-lg bg-gray-100 shadow-sm text-gray-700 focus:ring-2 focus:ring-blue-400 font-mono transition-all"
+                required
+                disabled={confirmModalOpen}
+              ></textarea>
+            </div>
+            <div className="text-center">
+              <button
+                type="submit"
+                className="w-full py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold rounded-lg shadow-md hover:opacity-90 transition-all font-sans text-base"
+                disabled={confirmModalOpen}
+              >
+                Order RFID Card
               </button>
-            ) : (
-              <button onClick={() => setIsModalOpen(true)} className="app-btn">
-                Order My Card
-              </button>
-            )}
-          </>
-        )}
-        <img
-          className="rounded-xl mt-2"
-          src="https://cdn11.bigcommerce.com/s-ypkdkc2suf/product_images/uploaded_images/access-control-prox-proxy-cards.png"
-          alt=""
-        />
-      </div>
+            </div>
+          </form>
+        </>
+      ) : (
+        <div className="text-center p-6">
+          <h2 className="text-3xl font-bold text-green-600">Order Summary</h2>
+          <p className="mt-4 text-gray-700">
+            Your RFID Card order has been successfully placed.
+          </p>
+          <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-md text-left">
+            <p><strong>Full Name:</strong> {formData.fullName}</p>
+            <p><strong>Email:</strong> {formData.email}</p>
+            <p><strong>Province:</strong> {formData.province}</p>
+            <p><strong>City:</strong> {formData.city}</p>
+            <p><strong>Postal Code:</strong> {formData.postalCode}</p>
+            <p><strong>Address:</strong> {formData.address}</p>
+          </div>
+          <p className="text-gray-500 text-sm mt-3">
+          The RFID Card will arrive in less than seven business days
+          </p>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="mt-4 w-full py-2 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition-all"
+          >
+            View Order Details
+          </button>
+        </div>
+      )}
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-primary p-6 rounded-xl w-96">
-            <h2 className="text-xl text-center text-white font-bold mb-4">
-              Enter Your Address
+      {confirmModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold text-blue-700 mb-4">
+              Confirm Order
             </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block text-white text-xl font-semibold mb-2">
-                  Province
-                </label>
-                <select
-                  name="province"
-                  value={formData.province}
-                  onChange={handleProvinceChange}
-                  className="w-full px-4 py-2 border rounded-md"
-                  required
-                >
-                  <option value="">Select Province</option>
-                  {provinces.map((province) => (
-                    <option key={province} value={province}>
-                      {province}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <p>Are you sure you want to place this order?</p>
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={handleConfirmYes}
+                className="w-1/2 mr-2 py-2 bg-green-500 text-white font-bold rounded-lg shadow-md hover:bg-green-600 transition-all"
+              >
+                Yes
+              </button>
+              <button
+                onClick={handleConfirmNo}
+                className="w-1/2 ml-2 py-2 bg-red-500 text-white font-bold rounded-lg shadow-md hover:bg-red-600 transition-all"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* City Dropdown */}
-              <div className="mb-4">
-                <label className="block text-white text-xl font-semibold mb-2">
-                  City
-                </label>
-                <select
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-md"
-                  required
-                  disabled={!formData.province}
-                >
-                  <option value="">Select City</option>
-                  {cities.map((city) => (
-                    <option key={city} value={city}>
-                      {city}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-white text-xl font-semibold mb-2">
-                  Postal Code
-                </label>
-                <input
-                  type="number"
-                  name="postalCode"
-                  value={formData.postalCode}
-                  onChange={handleInputChange}
-                  max="99999"
-                  min="0"
-                  className="w-full px-4 py-2 border rounded-md"
-                  required
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-white text-xl font-semibold mb-2">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border rounded-md"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="mr-2 text-gray-500"
-                >
-                  Cancel
-                </button>
-                <button type="submit" className="app-btn">
-                  Submit
-                </button>
-              </div>
-            </form>
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-2xl font-bold text-green-600 mb-4">
+              Order Confirmation
+            </h2>
+            <div className="space-y-2">
+              <p><strong>Full Name:</strong> {formData.fullName}</p>
+              <p><strong>Email:</strong> {formData.email}</p>
+              <p><strong>Province:</strong> {formData.province}</p>
+              <p><strong>City:</strong> {formData.city}</p>
+              <p><strong>Postal Code:</strong> {formData.postalCode}</p>
+              <p><strong>Address:</strong> {formData.address}</p>
+            </div>
+            <button
+              onClick={closeModal}
+              className="mt-4 w-full py-2 bg-blue-500 text-white font-bold rounded-lg shadow-md hover:bg-blue-600 transition-all"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

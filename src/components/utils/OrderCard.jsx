@@ -1,40 +1,64 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 const OrderCard = ({ onSubmit }) => {
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     fullName: '',
     email: '',
     province: '',
     city: '',
     postalCode: '',
     address: '',
+  };
+
+  const [formData, setFormData] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedData = sessionStorage.getItem('orderFormData');
+      return savedData ? JSON.parse(savedData) : initialFormData;
+    }
+    return initialFormData;
   });
+
+  const [orderPlaced, setOrderPlaced] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const savedOrderPlaced = sessionStorage.getItem('orderPlaced');
+      return savedOrderPlaced ? JSON.parse(savedOrderPlaced) : false;
+    }
+    return false;
+  });
+
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('orderFormData', JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('orderPlaced', JSON.stringify(orderPlaced));
+    }
+  }, [orderPlaced]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Prevent changes if order is placed or confirmation is pending
     if (orderPlaced || confirmModalOpen) return;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Validate that all fields are filled
     if (Object.values(formData).some((value) => value.trim() === '')) {
       toast.error('All fields are required!');
       return;
     }
-    // Open the confirmation popup and disable further clicks
     setConfirmModalOpen(true);
   };
 
-  // Function to send confirmation email (requires a backend endpoint)
   const sendConfirmationEmail = async (email, orderData) => {
     try {
       const response = await fetch('/api/send-confirmation-email', {
@@ -52,14 +76,11 @@ const OrderCard = ({ onSubmit }) => {
   };
 
   const handleConfirmYes = async () => {
-    // Immediately close the confirmation popup
     setConfirmModalOpen(false);
-    // Place the order
     setOrderPlaced(true);
     setIsModalOpen(true);
     toast.success('Your RFID Card order has been placed successfully!');
     onSubmit(formData);
-    // Attempt to send the confirmation email
     try {
       await sendConfirmationEmail(formData.email, formData);
     } catch (error) {
@@ -68,7 +89,6 @@ const OrderCard = ({ onSubmit }) => {
   };
 
   const handleConfirmNo = () => {
-    // Close the confirmation popup without placing the order
     setConfirmModalOpen(false);
   };
 
@@ -145,7 +165,7 @@ const OrderCard = ({ onSubmit }) => {
             <p><strong>Address:</strong> {formData.address}</p>
           </div>
           <p className="text-gray-500 text-sm mt-3">
-          The RFID Card will arrive in less than seven business days
+            The RFID Card will arrive in less than seven business days
           </p>
           <button
             onClick={() => setIsModalOpen(true)}

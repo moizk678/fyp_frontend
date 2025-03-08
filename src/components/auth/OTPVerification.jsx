@@ -6,8 +6,7 @@ import Loader from "../utils/Loader";
 import { apiBaseUrl } from "../api/settings";
 import { initializeStore } from "../../store/intializeStore";
 import { useDispatch } from "react-redux";
-import PurpleBus from "../../assets/ppb.jpg"; // Adjusted path
-
+import PurpleBus from "../../assets/ppb.jpg";
 
 function OTPVerification() {
   const navigate = useNavigate();
@@ -23,10 +22,18 @@ function OTPVerification() {
     if (e.key === "Backspace" || e.key === "Delete") {
       e.preventDefault();
       if (otp[index] !== "") {
-        setOtp((prevOtp) => [...prevOtp.slice(0, index), "", ...prevOtp.slice(index + 1)]);
+        setOtp((prevOtp) => [
+          ...prevOtp.slice(0, index),
+          "",
+          ...prevOtp.slice(index + 1),
+        ]);
       } else if (index > 0) {
         inputRefs.current[index - 1].focus();
-        setOtp((prevOtp) => [...prevOtp.slice(0, index - 1), "", ...prevOtp.slice(index)]);
+        setOtp((prevOtp) => [
+          ...prevOtp.slice(0, index - 1),
+          "",
+          ...prevOtp.slice(index)
+        ]);
       }
     }
   };
@@ -34,7 +41,11 @@ function OTPVerification() {
   const handleInput = (e, index) => {
     const value = e.target.value.replace(/\D/g, "");
     if (value) {
-      setOtp((prevOtp) => [...prevOtp.slice(0, index), value, ...prevOtp.slice(index + 1)]);
+      setOtp((prevOtp) => [
+        ...prevOtp.slice(0, index),
+        value,
+        ...prevOtp.slice(index + 1),
+      ]);
       if (index < otp.length - 1) {
         inputRefs.current[index + 1].focus();
       }
@@ -57,9 +68,19 @@ function OTPVerification() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Ensure email exists in localStorage before proceeding
+    const email = localStorage.getItem("email");
+    if (!email) {
+      toast.error("No email found. Please sign up again.");
+      navigate("/signup");
+      return;
+    }
+
+    // Join OTP digits and validate against a 6-digit regex
     const otpValue = otp.join("");
-    if (otpValue.length < 6) {
-      toast.error("Please enter a 6-digit OTP.");
+    if (!/^\d{6}$/.test(otpValue)) {
+      toast.error("Please enter a valid 6-digit OTP.");
       return;
     }
 
@@ -69,21 +90,23 @@ function OTPVerification() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: localStorage.getItem("email"),
+          email,
           otp: otpValue,
         }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        const { message, token } = data;
-        window.localStorage.setItem("token", token);
+      if (response.ok && data.token) {
+        localStorage.setItem("token", data.token);
         await initializeStore(dispatch, apiBaseUrl);
-        toast.success(message);
+        toast.success(data.message);
         navigate("/");
       } else {
-        toast.error("OTP verification failed. Please try again.");
+        // Clear OTP inputs on failure to enforce re-entry
+        setOtp(Array(6).fill(""));
+        // Display specific error message if available
+        toast.error(data.error || "OTP verification failed. Please try again.");
       }
     } catch (error) {
       toast.error("An error occurred. Please try again.");
@@ -96,14 +119,14 @@ function OTPVerification() {
     <div className="px-4 lg:px-0 grid grid-cols-1 md:grid-cols-2 h-screen 
         bg-gradient-to-r from-purple-900 via-violet-700 to-indigo-500"
     >
-{/* Left Side Image */}
-<div className="hidden md:block">
-  <img
-    src={PurpleBus}
-    className="object-contain w-full h-full brightness-75 mx-auto"
-    alt="purple-bus"
-  />
-</div>
+      {/* Left Side Image */}
+      <div className="hidden md:block">
+        <img
+          src={PurpleBus}
+          className="object-contain w-full h-full brightness-75 mx-auto"
+          alt="purple-bus"
+        />
+      </div>
 
       {/* Right Side OTP Form */}
       <div className="flex justify-center items-center">

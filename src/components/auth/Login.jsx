@@ -19,29 +19,33 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Trim and validate inputs
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      toast.error("Please enter both email and password.");
+      return;
+    }
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      if (!email || !password) {
-        toast.error("Please enter both email and password.");
-        setIsLoading(false);
-        return;
-      }
-
-      const data = { email, password };
-      const result = await loginUser(data);
-
+      const loginData = { email: trimmedEmail, password };
+      const result = await loginUser(loginData);
       if (result.success) {
+        // Warning: localStorage is vulnerable to XSS. Consider using HTTP-only cookies for production.
         const { data } = result;
         window.localStorage.setItem("token", data.token);
         await initializeStore(dispatch, apiBaseUrl);
+        toast.success(data.message || "Logged in successfully.");
         navigate("/");
-        toast.success(data.message);
       } else {
-        toast.error(result.message);
+        toast.error(result.message || "Login failed. Please check your credentials.");
       }
     } catch (error) {
-      console.error("Login error:", error.message);
-      toast.error("Something went wrong. Please try again.");
+      console.error("Login error:", error);
+      const errorMsg =
+        error.response && error.response.data && error.response.data.message
+          ? error.response.data.message
+          : "Something went wrong. Please try again.";
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +56,6 @@ function Login() {
       className="px-4 lg:px-0 grid grid-cols-1 md:grid-cols-2 h-screen 
         bg-gradient-to-r from-purple-900 via-violet-700 to-indigo-500"
     >
-
       {/* Left Side Image */}
       <div className="hidden md:block">
         <img
@@ -149,6 +152,7 @@ function Login() {
             Don’t have an account yet?
           </p>
           <button
+            type="button"
             className="mt-2 border border-white text-white hover:bg-white hover:text-purple-900 
                 font-semibold rounded-full py-2 w-full transition duration-300 ease-in-out transform hover:scale-105"
             onClick={() => navigate("/signup")}

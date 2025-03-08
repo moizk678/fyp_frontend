@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import {
   GoogleMap,
@@ -21,24 +20,30 @@ const RealTimeNavigationMap = () => {
   const { busId } = useParams();
   const buses = useSelector((state) => state.buses.data);
   const selectedBus = buses.find((bus) => bus._id === busId);
+
   const [driverLocation, setDriverLocation] = useState(null);
   const [destinationCoords, setDestinationCoords] = useState(null);
   const [directionsResponse, setDirectionsResponse] = useState(null);
   const [distance, setDistance] = useState("");
   const [duration, setDuration] = useState("");
 
+  // New states for alternative routes and live timings
+  const [alternativeRoutes, setAlternativeRoutes] = useState([]);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
+  const [departureTime, setDepartureTime] = useState("");
+  const [arrivalTime, setArrivalTime] = useState("");
+
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
     libraries: ["places"],
   });
 
-  // Fetch Driver Location
+  // Fetch driver location from your API
   const fetchDriverLocation = async () => {
     try {
       const { data } = await axios.post(`${apiBaseUrl}/location/fetch`, {
         busId,
       });
-
       const updatedLocation = {
         lat: data.data.driverLatitude,
         lng: data.data.driverLongitude,
@@ -49,7 +54,7 @@ const RealTimeNavigationMap = () => {
           prevLocation.lat === updatedLocation.lat &&
           prevLocation.lng === updatedLocation.lng
         ) {
-          return prevLocation; // No update needed if location is the same
+          return prevLocation; // No change
         }
         return updatedLocation;
       });
@@ -58,14 +63,15 @@ const RealTimeNavigationMap = () => {
     }
   };
 
-  // Fetch Destination Coordinates
-  const fetchDestinationCoords = async (destination) => {
+  // Fetch destination coordinates based on a provided address.
+  // Default to selectedBus.route.endCity if no destination is passed.
+  const fetchDestinationCoords = async (destination = selectedBus?.route.endCity) => {
     try {
       const { data } = await axios.get(
         `https://maps.googleapis.com/maps/api/geocode/json`,
         {
           params: {
-            address: `${selectedBus.route.endCity}`,
+            address: destination,
             key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
           },
         }
@@ -77,24 +83,25 @@ const RealTimeNavigationMap = () => {
     }
   };
 
-  // Initial Fetches
+  // Initial fetches: driver location and destination coordinates.
   useEffect(() => {
     fetchDriverLocation();
-    fetchDestinationCoords();
-  }, [busId]);
+    if (selectedBus) {
+      fetchDestinationCoords();
+    }
+  }, [busId, selectedBus]);
 
-  // Polling Driver Location Every 3 Seconds
+  // Poll driver location every 3 seconds.
   useEffect(() => {
     const interval = setInterval(() => {
       fetchDriverLocation();
     }, 3000);
-
     return () => clearInterval(interval);
   }, [busId]);
 
-  // Calculate Route
+  // Calculate route with alternative options and live timings.
   useEffect(() => {
-    if (driverLocation && destinationCoords) {
+    if (driverLocation && destinationCoords && window.google) {
       const calculateRoute = async () => {
         try {
           const directionsService = new window.google.maps.DirectionsService();
@@ -102,10 +109,25 @@ const RealTimeNavigationMap = () => {
             origin: driverLocation,
             destination: destinationCoords,
             travelMode: window.google.maps.TravelMode.DRIVING,
+            provideRouteAlternatives: true,
+            drivingOptions: {
+              departureTime: new Date(), // Live departure time
+              trafficModel: window.google.maps.TrafficModel.BEST_GUESS,
+            },
           });
-          setDirectionsResponse(results);
+          // Store all alternative routes.
+          setAlternativeRoutes(results.routes);
+          // Set default route (first alternative).
+          setSelectedRouteIndex(0);
+          setDirectionsResponse({ ...results, routes: [results.routes[0]] });
           setDistance(results.routes[0].legs[0].distance.text);
           setDuration(results.routes[0].legs[0].duration.text);
+          setDepartureTime(
+            results.routes[0].legs[0].departure_time?.text || "N/A"
+          );
+          setArrivalTime(
+            results.routes[0].legs[0].arrival_time?.text || "N/A"
+          );
         } catch (error) {
           console.error("Error calculating route:", error);
         }
@@ -120,8 +142,8 @@ const RealTimeNavigationMap = () => {
     <div>
       <GoogleMap
         mapContainerStyle={containerStyle}
-        // Don't set the center dynamically; the map will remain where the user left it
         zoom={10}
+        center={driverLocation || destinationCoords}
       >
         {/* Driver Marker */}
         {driverLocation && (
@@ -134,20 +156,58 @@ const RealTimeNavigationMap = () => {
             animation={window.google.maps.Animation.DROP}
           />
         )}
-
-        {/* Route */}
+        {/* Render selected route */}
         {directionsResponse && (
           <DirectionsRenderer directions={directionsResponse} />
         )}
       </GoogleMap>
-      <div className="info">
-        <LocationDemographics distance={distance} duration={duration} />
-      </div>
-      <div className="stops">
-        <h3>See the Stops Distance</h3>
+
+      {/* Display live distance, duration, and departure/arrival times */}
+      <LocationDemographics
+        distance={distance}
+        duration={duration}
+        departureTime={departureTime}
+        arrivalTime={arrivalTime}
+      />
+
+      {/* Route Selection Options */}
+      {alternativeRoutes.length > 1 && (
+        <div className="p-4">
+          <h3 className="text-white font-bold mb-2">Select a Route:</h3>
+          <div className="flex flex-wrap gap-2">
+            {alternativeRoutes.map((route, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setSelectedRouteIndex(index);
+                  // Update displayed route
+                  setDirectionsResponse({ ...directionsResponse, routes: [route] });
+                  setDistance(route.legs[0].distance.text);
+                  setDuration(route.legs[0].duration.text);
+                  setDepartureTime(
+                    route.legs[0].departure_time?.text || "N/A"
+                  );
+                  setArrivalTime(route.legs[0].arrival_time?.text || "N/A");
+                }}
+                className={`px-4 py-2 rounded-full transition transform hover:scale-105 ${
+                  selectedRouteIndex === index
+                    ? "bg-yellow-500 text-black"
+                    : "bg-white/20 text-white"
+                }`}
+              >
+                Route {index + 1}: {route.legs[0].distance.text} | {route.legs[0].duration.text}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Stops and Destination Change */}
+      <div className="stops p-4">
+        <h3 className="text-white font-bold mb-2">Stops:</h3>
         {selectedBus?.route?.stops.map((stop, index) => (
-          <div key={index} className="stop">
-            <p>
+          <div key={index} className="mb-2">
+            <p className="text-white">
               Stop {index + 1}: {stop.name}
             </p>
             <button

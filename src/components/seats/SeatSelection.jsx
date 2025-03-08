@@ -3,6 +3,7 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiBaseUrl } from "../api/settings";
+import { toast } from "react-hot-toast"; // Import react-hot-toast
 
 const SeatSelection = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const SeatSelection = () => {
         (s) => s.seatNumber === currentSeat.seatNumber
       );
       if (seatIndex === -1) {
-        alert("Invalid seat selection.");
+        toast.error("Invalid seat selection.");
         return;
       }
       const row = Math.floor(seatIndex / colCount);
@@ -78,7 +79,7 @@ const SeatSelection = () => {
       });
 
       if (conflictFound) {
-        alert(
+        toast.error(
           "Cannot book this seat due to an adjacent gender conflict. (Note: Front or back seats are allowed.)"
         );
         return;
@@ -95,7 +96,7 @@ const SeatSelection = () => {
       setSelectedSeats((prevSeats) => [...prevSeats, ticket]);
       setShowModal(false);
     } else {
-      alert("Please fill in both Customer Name and Gender.");
+      toast.error("Please fill in both Customer Name and Gender.");
     }
   };
 
@@ -104,7 +105,7 @@ const SeatSelection = () => {
       // Pass along selected seats; payment component will compute total price using busData fare.
       navigate(`/payments/${id}`, { state: { reservedSeats: selectedSeats } });
     } else {
-      alert("Please fill in all details for each selected seat.");
+      toast.error("Please fill in all details for each selected seat.");
     }
   };
 
@@ -161,7 +162,7 @@ const SeatSelection = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white/20 backdrop-blur-md shadow-2xl rounded-2xl border border-white/30 w-96 p-6 animate-fade-in">
             <h3 className="font-bold text-center text-xl text-white mb-4">
-              🎟️ Confirm Seat # {parseInt(currentSeat.seatNumber.split("-")[1])}
+              🎟 Confirm Seat # {parseInt(currentSeat.seatNumber.split("-")[1])}
             </h3>
 
             {/* Customer Name Input */}
@@ -220,17 +221,17 @@ const SeatSelection = () => {
 
 const Seat = ({ seat, index, selectedSeat, onClick }) => {
   // Determine the seat style:
-  // 1. If the seat is already booked (by someone else) -> red.
-  // 2. If the seat is selected by the current user -> blue for male, pink for female.
+  // 1. If the seat is already booked (by someone else), color based on gender.
+  // 2. If the seat is selected by the current user, color based on selected seat gender.
   // 3. Otherwise, available seat styling.
   let seatColor = "";
   let textColor = "";
 
   if (selectedSeat) {
-    seatColor = selectedSeat.gender === "M" ? "bg-blue-400" : "bg-pink-400";
+    seatColor = selectedSeat.gender === "M" ? "bg-red-400" : "bg-blue-400";
     textColor = "text-white";
   } else if (seat.booked) {
-    seatColor = "bg-red-400 cursor-not-allowed";
+    seatColor = seat.gender === "M" ? "bg-red-400" : "bg-blue-400";
     textColor = "text-white";
   } else {
     seatColor = "bg-gray-300 hover:bg-green-400 cursor-pointer";
@@ -239,11 +240,11 @@ const Seat = ({ seat, index, selectedSeat, onClick }) => {
 
   return (
     <div
-      className={`w-12 h-12 flex items-center justify-center font-bold rounded-lg shadow-md ${seatColor} ${textColor} transition-all`}
-      onClick={onClick}
-    >
-      {seat.booked ? seat.gender : parseInt(seat.seatNumber.split("-")[1])}
-    </div>
+    className={`w-12 h-12 flex items-center justify-center font-bold rounded-lg shadow-md ${seatColor} ${textColor} transition-all`}
+    onClick={onClick}
+  >
+    {seat.booked ? seat.gender : parseInt(seat.seatNumber.split("-")[1])}
+  </div>
   );
 };
 

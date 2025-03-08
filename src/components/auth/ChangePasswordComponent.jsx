@@ -3,7 +3,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { apiBaseUrl } from "../api/settings";
 import { useSelector } from "react-redux";
-import { FaUnlockAlt, FaKey } from "react-icons/fa";
+import { FaUnlockAlt, FaKey, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const ChangePasswordComponent = () => {
   const user = useSelector((state) => state.user.data);
@@ -18,8 +18,15 @@ const ChangePasswordComponent = () => {
     number: false,
     specialChar: false,
   });
+  const [oldPasswordVisible, setOldPasswordVisible] = useState(false);
+  const [newPasswordVisible, setNewPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   const handleVerifyOldPassword = async () => {
+    if (!oldPassword) {
+      toast.error("Please enter your current password.");
+      return;
+    }
     try {
       const response = await axios.post(`${apiBaseUrl}/user/verify-password`, {
         email: user.email,
@@ -39,11 +46,19 @@ const ChangePasswordComponent = () => {
   };
 
   const handleChangePassword = async () => {
+    if (!isVerified) {
+      toast.error("Please verify your old password first.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast.error("New password and confirm password do not match.");
       return;
     }
-
+    const isNewPasswordValid = Object.values(passwordRules).every(Boolean);
+    if (!isNewPasswordValid) {
+      toast.error("New password does not meet the required rules.");
+      return;
+    }
     try {
       const response = await axios.post(`${apiBaseUrl}/user/change-password`, {
         email: user.email,
@@ -53,6 +68,7 @@ const ChangePasswordComponent = () => {
       if (response.status === 200) {
         toast.success("Password changed successfully.");
         setIsModalOpen(false);
+        // Reset all fields
         setOldPassword("");
         setNewPassword("");
         setConfirmPassword("");
@@ -75,7 +91,7 @@ const ChangePasswordComponent = () => {
       length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
       number: /[0-9]/.test(password),
-      specialChar: /[\W]/.test(password),
+      specialChar: /[\W_]/.test(password),
     };
     setPasswordRules(rules);
   };
@@ -111,13 +127,27 @@ const ChangePasswordComponent = () => {
                 Old Password
               </label>
               <div className="flex items-center gap-2">
-                <input
-                  type="password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full px-4 py-3 border border-purple-400 bg-white/20 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                  disabled={isVerified}
-                />
+                <div className="relative w-full">
+                  <input
+                    type={oldPasswordVisible ? "text" : "password"}
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="w-full px-4 py-3 border border-purple-400 bg-white/20 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                    disabled={isVerified}
+                    placeholder="Enter your current password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    onClick={() => setOldPasswordVisible(!oldPasswordVisible)}
+                  >
+                    {oldPasswordVisible ? (
+                      <FaEyeSlash className="text-white" />
+                    ) : (
+                      <FaEye className="text-white" />
+                    )}
+                  </button>
+                </div>
                 <button
                   onClick={handleVerifyOldPassword}
                   className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all"
@@ -132,16 +162,30 @@ const ChangePasswordComponent = () => {
               <label className="block text-sm font-semibold text-white mb-2">
                 New Password
               </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => {
-                  setNewPassword(e.target.value);
-                  validatePassword(e.target.value);
-                }}
-                className="w-full px-4 py-3 border border-purple-400 bg-white/20 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                disabled={!isVerified}
-              />
+              <div className="relative">
+                <input
+                  type={newPasswordVisible ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    validatePassword(e.target.value);
+                  }}
+                  className="w-full px-4 py-3 border border-purple-400 bg-white/20 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  disabled={!isVerified}
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setNewPasswordVisible(!newPasswordVisible)}
+                >
+                  {newPasswordVisible ? (
+                    <FaEyeSlash className="text-white" />
+                  ) : (
+                    <FaEye className="text-white" />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Password Validation Rules */}
@@ -150,16 +194,16 @@ const ChangePasswordComponent = () => {
                 <h3 className="text-white font-medium mb-2">Password Rules:</h3>
                 <ul className="space-y-1">
                   <li className={`text-sm flex items-center gap-2 ${passwordRules.length ? "text-green-400" : "text-gray-400"}`}>
-                    ✔️ At least 8 characters
+                    {passwordRules.length ? "✔️" : "❌"} At least 8 characters
                   </li>
                   <li className={`text-sm flex items-center gap-2 ${passwordRules.uppercase ? "text-green-400" : "text-gray-400"}`}>
-                    ✔️ At least one uppercase letter
+                    {passwordRules.uppercase ? "✔️" : "❌"} At least one uppercase letter
                   </li>
                   <li className={`text-sm flex items-center gap-2 ${passwordRules.number ? "text-green-400" : "text-gray-400"}`}>
-                    ✔️ At least one number
+                    {passwordRules.number ? "✔️" : "❌"} At least one number
                   </li>
                   <li className={`text-sm flex items-center gap-2 ${passwordRules.specialChar ? "text-green-400" : "text-gray-400"}`}>
-                    ✔️ At least one special character
+                    {passwordRules.specialChar ? "✔️" : "❌"} At least one special character
                   </li>
                 </ul>
               </div>
@@ -170,22 +214,41 @@ const ChangePasswordComponent = () => {
               <label className="block text-sm font-semibold text-white mb-2">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-purple-400 bg-white/20 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                disabled={!isVerified}
-              />
+              <div className="relative">
+                <input
+                  type={confirmPasswordVisible ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border border-purple-400 bg-white/20 text-white rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  disabled={!isVerified}
+                  placeholder="Re-enter new password"
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                >
+                  {confirmPasswordVisible ? (
+                    <FaEyeSlash className="text-white" />
+                  ) : (
+                    <FaEye className="text-white" />
+                  )}
+                </button>
+              </div>
+              {confirmPassword && newPassword !== confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">Passwords do not match.</p>
+              )}
             </div>
 
             {/* Submit Button */}
             <button
               onClick={handleChangePassword}
               className={`w-full py-3 rounded-lg text-white font-bold shadow-md transition ${
-                isVerified ? "bg-green-600 hover:bg-green-700" : "bg-gray-500 cursor-not-allowed"
+                isVerified && newPassword && confirmPassword && newPassword === confirmPassword
+                  ? "bg-green-600 hover:bg-green-700"
+                  : "bg-gray-500 cursor-not-allowed"
               }`}
-              disabled={!isVerified}
+              disabled={!isVerified || !newPassword || !confirmPassword || newPassword !== confirmPassword}
             >
               Change Password
             </button>
